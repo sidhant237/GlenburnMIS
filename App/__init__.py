@@ -6,24 +6,8 @@ from flask_mail import Mail
 #initializing app
 app = Flask(__name__)
 
-#cross origin response certificate configuration
-app.config['CORS_HEADERS'] = 'Content-Type'
-
-#SQL DB configuratiosn
-app.config['MYSQL_HOST'] = "localhost"
-app.config['MYSQL_USER'] = "root"
-app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = "GlenDB"
-
-
-#mail sending configuration
-app.config['MAIL_SERVER'] ='smtp.gmail.com'
-app.config['MAIL_PORT'] = 465
-app.config['MAIL_USERNAME'] = ''
-app.config['MAIL_PASSWORD'] = ''
-app.config['MAIL_USE_TLS'] = False
-app.config['MAIL_USE_SSL'] = True
-
+#importing configurations
+app.config.from_pyfile('config.py')
 
 #initializing db
 mysql = MySQL(app)
