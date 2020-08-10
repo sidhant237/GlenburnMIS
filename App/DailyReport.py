@@ -1,3 +1,8 @@
+from flask import Flask, render_template, request, jsonify
+from flask_cors import cross_origin
+from App import app, mysql
+import json, datetime
+
 
 #9## DAILYRPEORT ###################################################################################
 @app.route('/dailyreport',methods=['GET', 'POST'])

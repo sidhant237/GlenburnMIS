@@ -1,3 +1,13 @@
+from flask import Flask, render_template, request, jsonify
+from flask_cors import cross_origin
+from App import app, mysql
+import json, datetime
+
+
+
+
+
+
 @app.route('/cultdaily',methods=['GET', 'POST'])
 @cross_origin()
 def cultivationdaily():

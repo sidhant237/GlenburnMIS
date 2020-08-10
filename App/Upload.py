@@ -1,17 +1,7 @@
 from flask import Flask, render_template, request, jsonify
-from flask_mysqldb import MySQL
+from flask_cors import cross_origin
 import json, datetime, os, csv
-from flask_cors import CORS, cross_origin
-
-app = Flask(__name__)
-cors = CORS(app)
-mysql = MySQL(app)
-
-app.config['CORS_HEADERS'] = 'Content-Type'
-app.config['MYSQL_HOST'] = "localhost"
-app.config['MYSQL_USER'] = "root"
-app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = "GlenDB"
+from App import app, mysql
 
 
 @app.route('/upload',methods=['POST'])

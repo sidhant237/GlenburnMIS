@@ -1,163 +1,222 @@
+from flask import Flask, render_template, request, jsonify
+from flask_cors import cross_origin
+from App import app, mysql, mail
+import json, datetime
+from flask_mail import Message
+import pandas as pd
+
 #9m
 @app.route('/email', methods=['GET', 'POST'])
 @cross_origin()
 def email():
-      cur = mysql.connection.cursor()
-      # d1 = "'" + (str(request.args.get("start"))) + "'"
-      # d11 = "'" + (str(request.args.get("end"))) + "'"
-      d1 = "'2020-07-01'"
-      d11 = "'2019-07-01'"
-      d2 = "'2020-07-03'"
+    email_data = factory()
+    def sids_converter(o):
+        if isinstance(o, datetime.date):
+                return str(o.year) + str("/") + str(o.month) + str("/") + str(o.day)
 
-      #DIV NAME
-      val = "DIVTAB.DIV_NAME"
-      tab = "DIVTAB, SECTAB, FIELDENTRY"
-      joi = "(FIELDENTRY.SEC_ID=SECTAB.SEC_ID) AND (SECTAB.DIV_ID = DIVTAB.DIV_ID)"
-      job = "FIELDENTRY.JOB_ID = 1"
-      cur.execute(f'''select {val} from {tab} where {joi} AND {job} and date = {d1} GROUP BY SECTAB.DIV_ID''')
-      rv = cur.fetchall()
+    send_mail(email_data)
+    return json.dumps({'message': 'success'})
 
-      # GL TODAY
-      val1 = "SUM(FIELDENTRY.GL_VAL)"
-      tab1 = "DIVTAB, SECTAB, FIELDENTRY"
-      joi1 = "(FIELDENTRY.SEC_ID=SECTAB.SEC_ID) AND (SECTAB.DIV_ID = DIVTAB.DIV_ID)"
-      job1 = "FIELDENTRY.JOB_ID = 1"
-      cur.execute(f'''select {val1} from {tab1} where {joi1} AND {job1} and date = {d1} GROUP BY SECTAB.DIV_ID''')
-      rv1 = cur.fetchall()
 
-      #GL TODAY LAST YEA1R
-      val2 = "SUM(FIELDENTRY.GL_VAL)"
-      tab2 = "FIELDENTRY, DIVTAB, SECTAB"
-      joi2 = "(FIELDENTRY.SEC_ID=SECTAB.SEC_ID) AND (SECTAB.DIV_ID = DIVTAB.DIV_ID)"
-      job2 = "FIELDENTRY.JOB_ID = 1"
-      cur.execute(f'''select {val2} from {tab2} where {joi2} AND {job2} and date = {d11} GROUP BY SECTAB.DIV_ID''')
-      rv2 = cur.fetchall()
+def fuel_report():
+    cur = mysql.connection.cursor()
+    d1 = "'2020-07-01'"
+    d2 = "'2020-07-02'"
+    fuel_report_row_headers = ['Machine', 'FuelUsed' , 'TM', 'TMFuel']
+    fuel_report_data = []
+    con = " MachineTab.Mach_Name"
+    fom = " sum(FuelEntry.Fuel_Val), sum(TM_Val), ROUND((SUM(TM_Val)/sum(FuelEntry.Fuel_Val)),2)"
+    tab = "FuelEntry, MachineTab, FuelTab, TMEntry"
+    joi = "FuelEntry.Fuel_ID = FuelTab.Fuel_ID AND FuelEntry.Mach_ID = MachineTab.Mach_ID AND TMEntry.TM_Date = FuelEntry.Date"
+    cur.execute(f'''select {con} , {fom}  from {tab} where {joi} and date >= {d1} and date <= {d2} group by MachineTab.Mach_Name''')
+    rv = cur.fetchmany(5)
+    for row in rv:
+        fuel_report_data.append(dict(zip(fuel_report_row_headers,row)))
+    return fuel_report_data
 
-      #FINE LEAF% TODAYS GL
-      val3 = "sum(FL_PER)"
-      tab3 = "FLENTRY, DIVTAB"
-      joi3 = "(FLENTRY.DIV_ID = DIVTAB.DIV_ID)"
-      cur.execute(f'''select {val3} from {tab3} where {joi3} and date = {d2} GROUP BY DIVTAB.DIV_ID''')
-      rv3 = cur.fetchall()
 
-      w = [i[0] for i in rv]
-      x = [i1[0] for i1 in rv1]
-      y = [i2[0] for i2 in rv2]
-      z = [i3[0] for i3 in rv3]
-      
-      q = zip(w,x,y,z)
-      json_data = []
-      column_headers = ['Division','GL Today','GL Today LY','FineLeaf%']
+def factory():
+    cur = mysql.connection.cursor()
+    cur1 = mysql.connection.cursor()
+    cur2 = mysql.connection.cursor()
+    cur3 = mysql.connection.cursor()
+    # d1 = "'" + (str(request.args.get("start"))) + "'"
+    # d11 = "'" + (str(request.args.get("end"))) + "'"
+    d1 = "'2020-07-01'"
+    d11 = "'2019-07-01'"
+    d2 = "'2020-07-03'"
 
-      for row in q:
-            json_data.append(dict(zip(column_headers, row)))
-      
+    #DIV NAME
+    val = "DivTab.Div_name"
+    tab = "DivTab, SecTab, FieldEntry"
+    joi = "(FieldEntry.Sec_ID=SecTab.Sec_ID) AND (SecTab.Div_ID = DivTab.Div_ID)"
+    job = "FieldEntry.Job_ID = 1"
+    cur.execute(f'''select {val} from {tab} where {joi} AND {job} and date = {d1} GROUP BY SecTab.Div_ID''')
+    rv = cur.fetchall()
+
+    # GL TODAY
+    val1 = "SUM(FieldEntry.GL_Val)"
+    tab1 = "DivTab, SecTab, FieldEntry"
+    joi1 = "(FieldEntry.Sec_ID=SecTab.Sec_ID) AND (SecTab.Div_ID = DivTab.Div_ID)"
+    job1 = "FieldEntry.Job_ID = 1"
+    cur1.execute(f'''select {val1} from {tab1} where {joi1} AND {job1} and date = {d1} GROUP BY SecTab.Div_ID''')
+    rv1 = cur1.fetchall()
+
+    #GL TODAY LAST YEA1R
+    val2 = "SUM(FieldEntry.GL_Val)"
+    tab2 = "FieldEntry, DivTab, SecTab"
+    joi2 = "(FieldEntry.Sec_ID=SecTab.Sec_ID) AND (SecTab.Div_ID = DivTab.Div_ID)"
+    job2 = "FieldEntry.Job_ID = 1"
+    cur2.execute(f'''select {val2} from {tab2} where {joi2} AND {job2} and date = {d11} GROUP BY SecTab.Div_ID''')
+    rv2 = cur2.fetchall()
+
+    #FINE LEAF% TODAYS GL
+    val3 = "sum(FL_Per)"
+    tab3 = "FLEntry, DivTab"
+    joi3 = "(FLEntry.Div_ID = DivTab.Div_ID)"
+    cur3.execute(f'''select {val3} from {tab3} where {joi3} and date = {d2} GROUP BY DivTab.Div_ID''')
+    rv3 = cur3.fetchall()
+
+    w = [i[0] for i in rv]
+    x = [i1[0] for i1 in rv1]
+    y = [i2[0] for i2 in rv2]
+    z = [i3[0] for i3 in rv3]
+    
+    q = zip(w,x,y,z)
+    json_data = []
+    column_headers = ['Division','GLToday','GLTodayLY','FineLeaf']
+
+    for row in q:
+        json_data.append(dict(zip(column_headers, row)))
+    
 
 
 #8m
-      cur = mysql.connection.cursor()
-      rva = []
+    cura = mysql.connection.cursor()
+    cura1 = mysql.connection.cursor()
+    cura2 = mysql.connection.cursor()
+    cura3 = mysql.connection.cursor()
+    cura4 = mysql.connection.cursor()
+    rva = []
 
-      # d1 = "'" + (str(request.args.get("start"))) + "'"
+    # d1 = "'" + (str(request.args.get("start"))) + "'"
 
-      d0 = "'2020-03-01'"  # start date current year
-      d00 = "'2019-03-01'"  # start date last year
-      d1 = "'2020-07-03'"  # current date
-      d11 = "'2019-07-02'"  # end date last year
+    d0 = "'2020-03-01'"  # start date current year
+    d00 = "'2019-03-01'"  # start date last year
+    d1 = "'2020-07-03'"  # current date
+    d11 = "'2019-07-02'"  # end date last year
 
-      # [TM TODAY]
-      vala = "TMENTRY.TM_VAL "
-      taba = "TMENTRY"
-      cur.execute(f'''select {vala} from {taba} where TM_DATE = {d1} ''')
-      rva.append(cur.fetchall()[0][0])
+    # [TM TODAY]
+    vala = "TMEntry.TM_Val "
+    taba = "TMEntry"
+    cura.execute(f'''select {vala} from {taba} where TM_Date = {d1} ''')
+    rva.append(cura.fetchall()[0][0])
 
-      # [TM TODATE]
-      vala1 = "sum(TMENTRY.TM_VAL)"
-      taba1 = "TMENTRY"
-      cur.execute(f'''select {vala1} from {taba1} where TM_DATE >= {d0} AND TM_DATE <= {d1} ''')
-      rva.append(cur.fetchall()[0][0])
+    # [TM TODATE]
+    vala1 = "sum(TMEntry.TM_Val)"
+    taba1 = "TMEntry"
+    cura1.execute(f'''select {vala1} from {taba1} where TM_Date >= {d0} AND TM_Date <= {d1} ''')
+    rva.append(cura1.fetchall()[0][0])
 
-      # [TM TODATE LAST YEAR]
-      vala2 = "sum(TMENTRY.TM_VAL)"
-      taba2 = "TMENTRY"
-      cur.execute(f'''select {vala2} from {taba2} where TM_DATE >= {d00} AND TM_DATE <= {d11} ''')
-      rva.append(cur.fetchall()[0][0])
+    # [TM TODATE LAST YEAR]
+    vala2 = "sum(TMEntry.TM_Val)"
+    taba2 = "TMEntry"
+    cura2.execute(f'''select {vala2} from {taba2} where TM_Date >= {d00} AND TM_Date <= {d11} ''')
+    rva.append(cura2.fetchall()[0][0])
 
-      # [RECOVERY % TODAY
-      vala3 = " ROUND(SUM(FIELDENTRY.GL_VAL)/SUM(TMENTRY.TM_VAL),4) * 100 "
-      taba3 = "TMENTRY , FIELDENTRY"
-      joia3 = "(TMENTRY.TM_DATE = FIELDENTRY.DATE) and (TMENTRY.TM_DATE="
-      cur.execute(f'''select {vala3} from {taba3} where {joia3}{d1})''')
-      rva.append(cur.fetchall()[0][0])
+    # [RECOVERY % TODAY
+    vala3 = " ROUND(SUM(FieldEntry.GL_Val)/SUM(TMEntry.TM_Val),4) * 100 "
+    taba3 = "TMEntry , FieldEntry"
+    joia3 = "(TMEntry.TM_Date = FieldEntry.Date) and (TMEntry.TM_Date="
+    cura3.execute(f'''select {vala3} from {taba3} where {joia3}{d1})''')
+    rva.append(cura3.fetchall()[0][0])
 
-      # [RECOVERY % TO DATE
-      vala4 = " ROUND(SUM(FIELDENTRY.GL_VAL)/SUM(TMENTRY.TM_VAL),4) * 100 "
-      taba4 = 'TMENTRY , FIELDENTRY'
-      joia4 = "(TMENTRY.TM_DATE = FIELDENTRY.DATE) and (TMENTRY.TM_DATE>="
-      cur.execute(f'''select {vala4} from {taba4} where {joia4}{d0}) and (TMENTRY.TM_DATE<={d1})''')
-      rva.append(cur.fetchall()[0][0])
+    # [RECOVERY % TO DATE
+    vala4 = " ROUND(SUM(FieldEntry.GL_Val)/SUM(TMEntry.TM_Val),4) * 100 "
+    taba4 = 'TMEntry , FieldEntry'
+    joia4 = "(TMEntry.TM_Date = FieldEntry.Date) and (TMEntry.TM_Date>="
+    cura4.execute(f'''select {vala4} from {taba4} where {joia4}{d0}) and (TMEntry.TM_Date<={d1})''')
+    rva.append(cura4.fetchall()[0][0])
+
+    column_headers = ['TMToday', 'TMTodate', 'TMTodateLY', 'RecoveryToday', 'RecoveryTodate']
+    json_data1 = []
+    json_data1.append(dict(zip(column_headers, rva)))
 
 
-      column_headers = ['TM Today', 'TM Todate', 'TM Todate LY', 'Recovery % Today', 'Recovery% Todate']
-      json_data1 = []
-      json_data1.append(dict(zip(column_headers, rv)))
+#10m
 
+    curb = mysql.connection.cursor()
+    curb1 = mysql.connection.cursor()
+    curb2 = mysql.connection.cursor()
+    # d1 = "'" + (str(request.args.get("start"))) + "'"
+    # d2 = "'" + (str(request.args.get("end"))) + "'"
+    d1 = "'2020-07-01'"
+    d2 = "'2020-07-03'"
 
-    #10m
+    curb.execute(f"SELECT SUM(SortEntry.Sort_Kg) FROM SortEntry WHERE date >={d1} and date <={d2} ")
+    rvb = curb.fetchall()
 
-      cur = mysql.connection.cursor()
-      # d1 = "'" + (str(request.args.get("start"))) + "'"
-      # d2 = "'" + (str(request.args.get("end"))) + "'"
-      d1 = "'2020-07-01'"
-      d2 = "'2020-07-03'"
+    curb1.execute(f"SELECT SUM(SortEntry.Sort_Kg) FROM SortEntry, TeaGradeTab WHERE SortEntry.TeaGrade_ID = TeaGradeTab.TeaGrade_ID and date >={d1} and date <={d2} group by TeaGradeTab.TeaGrade_Name ")
+    rvb1 = curb1.fetchall()
 
-      cur.execute(f"SELECT SUM(SORTENTRY.SORT_KG) FROM SORTENTRY WHERE date >={d1} and date <={d2} ")
-      rvb = cur.fetchall()
+    curb2.execute(f"SELECT TeaGradeTab.TeaGrade_Name FROM SortEntry, TeaGradeTab WHERE SortEntry.TeaGrade_ID = TeaGradeTab.TeaGrade_ID and date >={d1} and date <={d2} group by TeaGradeTab.TeaGrade_Name ")
+    rvb2 = curb2.fetchall()
 
-      cur.execute(f"SELECT SUM(SORTENTRY.SORT_KG) FROM SORTENTRY, TEAGRADETAB WHERE SORTENTRY.TEAGRADE_ID = TEAGRADETAB.TEAGRADE_ID and date >={d1} and date <={d2} group by TEAGRADETAB.TEAGRADE_NAME ")
-      rvb1 = cur.fetchall()
+    xb = [s[0] for s in rvb]
+    yb = [i[0] for i in rvb1]
+    wb = [str(u[0]) for u in rvb2]
 
-      cur.execute(f"SELECT TEAGRADETAB.TEAGRADE_NAME FROM SORTENTRY, TEAGRADETAB WHERE SORTENTRY.TEAGRADE_ID = TEAGRADETAB.TEAGRADE_ID and date >={d1} and date <={d2} group by TEAGRADETAB.TEAGRADE_NAME ")
-      rvb2 = cur.fetchall()
+    zb = []
+    for number in yb:
+        zb.append((round((number / x[0]),2)*100))
 
-      xb = [s[0] for s in rvb]
-      yb = [i[0] for i in rvb1]
-      wb = [str(u[0]) for u in rvb2]
+    zz = zip(wb,yb,zb)
 
-      zb = []
-      for number in yb:
-            zb.append((round((number / x[0]),2)*100))
+    json_data2 = []    
+    column_headers = ('Grade','Qnty','Percent')
 
-      zz = zip(wb,yb,zb)
-
-      json_data2 = []    
-      column_headers = ('Grade','Qnty','Percent')
-
-      for row in zz:
-            json_data2.append(dict(zip(column_headers,row)))
-      
+    for row in zz:
+        json_data2.append(dict(zip(column_headers,row)))
+    
 
 #5m
 
-      cur = mysql.connection.cursor()
-      
-      conc = "JOBTAB.JOB_NAME"
-      valc = "SUM(FIELDENTRY.MND_VAL)"
-      tabc = "FIELDENTRY,JOBTAB"
-      joic = "FIELDENTRY.JOB_ID=JOBTAB.JOB_ID"
-      cur.execute(f'''select {conc} , {valc} from {tabc} where {joic} and date >={d1} and date <={d2} group by FIELDENTRY.JOB_ID''')
-      row_headers = ['Job_Name', 'Mandays']
+    curc = mysql.connection.cursor()
+    #d1 = "'" + (str(request.args.get("start"))) + "'"
+    #d2 = "'" + (str(request.args.get("end"))) + "'"
+    d1 = "'2020-07-01'"
+    d2 = "'2020-07-04'"
 
-      rvc = cur.fetchmany(5)
-      json_data3 = []
+    conc = "Jobtab.Job_Name"
+    valc = "SUM(FieldEntry.Mnd_Val)"
+    tabc = "FieldEntry,Jobtab"
+    joic = "FieldEntry.Job_ID=Jobtab.Job_ID"
+    curc.execute(f'''select {conc} , {valc} from {tabc} where {joic} and date >={d1} and date <={d2} group by FieldEntry.Job_ID''')
+    row_headers = ['Job_Name', 'Mandays']
 
-      for result in rvc:
-            json_data3.append(dict(zip(row_headers, result)))
-      
+    rvc = curc.fetchmany(5)
+    json_data3 = []
 
-      json_submit = {}
-      json_submit['Greenleaf'] = json_data
-      json_submit['Tea Made'] = json_data1
-      json_submit['Grade Percent'] = json_data2
-      json_submit['Mandays'] = json_data3
-      return json.dumps(json_submit)
+    for result in rvc:
+        json_data3.append(dict(zip(row_headers, result)))
+    
+
+    json_submit = {}
+    json_submit['Greenleaf'] = json_data
+    json_submit['TeaMade'] = json_data1
+    json_submit['GradePercent'] = json_data2
+    json_submit['Mandays'] = json_data3
+    json_submit['Fuel_Report'] = fuel_report()
+    return json_submit
+
+
+
+
+def send_mail(email_data):
+    subject = "Excel Report"
+    recipients = ['joshyjoy999@gmail.com'] # 'sidhant237@gmail.com' 
+    body = "Good Day, \n\n Your Daily report file is here. \n\n Thank you."
+    msg = Message(subject=subject, body=body, recipients=recipients, sender="from@example.com")
+    msg.html = render_template('index.html', data = email_data)
+ 
+    return mail.send(msg)
