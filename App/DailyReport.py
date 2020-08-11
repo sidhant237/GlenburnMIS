@@ -4,21 +4,17 @@ from App import app, mysql
 import json, datetime
 
 
-#9## DAILYRPEORT ###################################################################################
+#9## DAILYRPEORT ###
 @app.route('/dailyreport',methods=['GET', 'POST'])
 @cross_origin()
 
 def dailyreport():
     cur = mysql.connection.cursor()
-    cur1 = mysql.connection.cursor()
-    cur2 = mysql.connection.cursor()
-    cur3 = mysql.connection.cursor()
     d1 = "'" + (str(request.args.get("start"))) + "'"
-    # d11 = "'" + (str(request.args.get("end"))) + "'"
-    #d1 = "'2020-07-01'"
-    d11 = "'2019-07-01'"
+    d11 = str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0]
+    d0 = "'2020-03-01'"  # start date current year
+    d00 = "'2019-03-01'"  # start date last year
     
-
     #DIV NAME
     val = "DIVTAB.DIV_NAME"
     tab = "DIVTAB, SECTAB, FIELDENTRY"
@@ -32,23 +28,23 @@ def dailyreport():
     tab1 = "DIVTAB, SECTAB, FIELDENTRY"
     joi1 = "(FIELDENTRY.SEC_ID=SECTAB.SEC_ID) AND (SECTAB.DIV_ID = DIVTAB.DIV_ID)"
     job1 = "FIELDENTRY.JOB_ID = 1"
-    cur1.execute(f'''select {val1} from {tab1} where {joi1} AND {job1} and date = {d1} GROUP BY SECTAB.DIV_ID''')
-    rv1 = cur1.fetchall()
+    cur.execute(f'''select {val1} from {tab1} where {joi1} AND {job1} and date = {d1} GROUP BY SECTAB.DIV_ID''')
+    rv1 = cur.fetchall()
 
     #GL TODAY LAST YEA1R
     val2 = "SUM(FIELDENTRY.GL_VAL)"
     tab2 = "FIELDENTRY, DIVTAB, SECTAB"
     joi2 = "(FIELDENTRY.SEC_ID=SECTAB.SEC_ID) AND (SECTAB.DIV_ID = DIVTAB.DIV_ID)"
     job2 = "FIELDENTRY.JOB_ID = 1"
-    cur2.execute(f'''select {val2} from {tab2} where {joi2} AND {job2} and date = {d11} GROUP BY SECTAB.DIV_ID''')
-    rv2 = cur2.fetchall()
+    cur.execute(f'''select {val2} from {tab2} where {joi2} AND {job2} and date = {d11} GROUP BY SECTAB.DIV_ID''')
+    rv2 = cur.fetchall()
 
     #FINE LEAF% TODAYS GL
     val3 = "sum(FL_PER)"
     tab3 = "FLENTRY, DIVTAB"
     joi3 = "(FLENTRY.DIV_ID = DIVTAB.DIV_ID)"
-    cur3.execute(f'''select {val3} from {tab3} where {joi3} and date = {d1} GROUP BY DIVTAB.DIV_ID''')
-    rv3 = cur3.fetchall()
+    cur.execute(f'''select {val3} from {tab3} where {joi3} and date = {d1} GROUP BY DIVTAB.DIV_ID''')
+    rv3 = cur.fetchall()
 
     w = [i[0] for i in rv]
     x = [i1[0] for i1 in rv1]
@@ -66,17 +62,7 @@ def dailyreport():
 #8 TEAMADE##############
 
     cur = mysql.connection.cursor()
-    cur1 = mysql.connection.cursor()
-    cur2 = mysql.connection.cursor()
-    cur3 = mysql.connection.cursor()
-    cur4 = mysql.connection.cursor()
     rv = []
-
-    # d1 = "'" + (str(request.args.get("start"))) + "'"
-
-    d0 = "'2020-03-01'"  # start date current year
-    d00 = "'2019-03-01'"  # start date last year
-    d11 = "'2019-07-02'"  # end date last year
 
     # [TM TODAY]
     val = "TMENTRY.TM_VAL "
@@ -87,28 +73,28 @@ def dailyreport():
     # [TM TODATE]
     val1 = "sum(TMENTRY.TM_VAL)"
     tab1 = "TMENTRY"
-    cur1.execute(f'''select {val1} from {tab1} where TM_DATE >= {d0} AND TM_DATE <= {d1} ''')
-    rv.append(cur1.fetchall()[0][0])
+    cur.execute(f'''select {val1} from {tab1} where TM_DATE >= {d0} AND TM_DATE <= {d1} ''')
+    rv.append(cur.fetchall()[0][0])
 
     # [TM TODATE LAST YEAR]
     val2 = "sum(TMENTRY.TM_VAL)"
     tab2 = "TMENTRY"
-    cur2.execute(f'''select {val2} from {tab2} where TM_DATE >= {d00} AND TM_DATE <= {d11} ''')
-    rv.append(cur2.fetchall()[0][0])
+    cur.execute(f'''select {val2} from {tab2} where TM_DATE >= {d00} AND TM_DATE <= {d11} ''')
+    rv.append(cur.fetchall()[0][0])
 
     # [RECOVERY % TODAY
     val3 = " ROUND(SUM(FIELDENTRY.GL_VAL)/SUM(TMENTRY.TM_VAL),4) * 100 "
     tab3 = "TMENTRY , FIELDENTRY"
     joi3 = "(TMENTRY.TM_DATE = FIELDENTRY.DATE) and (TMENTRY.TM_DATE="
-    cur3.execute(f'''select {val3} from {tab3} where {joi3}{d1})''')
-    rv.append(cur3.fetchall()[0][0])
+    cur.execute(f'''select {val3} from {tab3} where {joi3}{d1})''')
+    rv.append(cur.fetchall()[0][0])
 
     # [RECOVERY % TO DATE
     val4 = " ROUND(SUM(FIELDENTRY.GL_VAL)/SUM(TMENTRY.TM_VAL),4) * 100 "
     tab4 = 'TMENTRY , FIELDENTRY'
     joi4 = "(TMENTRY.TM_DATE = FIELDENTRY.DATE) and (TMENTRY.TM_DATE>="
-    cur4.execute(f'''select {val4} from {tab4} where {joi4}{d0}) and (TMENTRY.TM_DATE<={d1})''')
-    rv.append(cur4.fetchall()[0][0])
+    cur.execute(f'''select {val4} from {tab4} where {joi4}{d0}) and (TMENTRY.TM_DATE<={d1})''')
+    rv.append(cur.fetchall()[0][0])
 
     def sids_converter(o):
         if isinstance(o, datetime.date):
@@ -123,11 +109,7 @@ def dailyreport():
 #5
 
     cur = mysql.connection.cursor()
-    #d1 = "'" + (str(request.args.get("start"))) + "'"
-    #d2 = "'" + (str(request.args.get("end"))) + "'"
-    #d1 = "'2020-07-01'"
     
-
     con = "JOBTAB.JOB_NAME"
     val = "SUM(FIELDENTRY.MND_VAL)"
     tab = "FIELDENTRY,JOBTAB"
@@ -150,9 +132,7 @@ def dailyreport():
 #3
 
     cur = mysql.connection.cursor()
-    #d1 = "'2020-07-01'"
-    #d1 = "'" + (str(request.args.get("start"))) + "'"
-
+    
     con = "fieldentry.date, DIVTAB.DIV_NAME, SECTAB.SEC_NAME,SQUTAB.SQU_NAME"
     val = "FIELDENTRY.MND_VAL, FIELDENTRY.GL_VAL, FIELDENTRY.AREA_VAL"
     fom = "ROUND((GL_VAL/MND_VAL),2), ROUND((GL_VAL/AREA_VAL),2),ROUND((MND_VAL/AREA_VAL),2),fieldentry.pluck_int"
@@ -181,8 +161,6 @@ def dailyreport():
 
 
     cur = mysql.connection.cursor()
-    #d1 = "'2020-07-01'"
-    #d1 = "'" + (str(request.args.get("start"))) + "'"
 
     con = "FIELDENTRY.DATE, JOBTAB.JOB_NAME,DIVTAB.DIV_NAME, SECTAB.SEC_NAME, SQUTAB.SQU_NAME"
     val = "MND_VAL, AREA_VAL"
@@ -210,10 +188,6 @@ def dailyreport():
 #10##
 
     cur = mysql.connection.cursor()
-      # d1 = "'" + (str(request.args.get("start"))) + "'"
-      # d2 = "'" + (str(request.args.get("end"))) + "'"
-      #d1 = "'2020-07-01'"
-    d2 = "'2020-07-03'"
 
       #SUM-ALLGRADES-DATERANGE
     cur.execute(f"SELECT SUM(SORTENTRY.SORT_KG) FROM SORTENTRY WHERE date >={d1} and date <={d2} ")
@@ -261,8 +235,6 @@ def dailyreport():
     ############
     #6
     cur = mysql.connection.cursor()
-    #d1 = "'" + (str(request.args.get("start"))) + "'"
-    #d1 = "'2020-07-01'"
 
     con = " MACHINETAB.MACH_NAME"
     fom = " sum(FUELENTRY.FUEL_VAL), sum(TM_VAL), ROUND((SUM(TM_VAL)/sum(FUELENTRY.FUEL_VAL)),2)"

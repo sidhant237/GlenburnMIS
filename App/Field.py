@@ -42,12 +42,9 @@ def cultivationdaily():
 @cross_origin()
 def cultivationgroup():
     cur = mysql.connection.cursor()
-    # d1 = "'" + (str(request.args.get("start"))) + "'"
-    # d2 = "'" + (str(request.args.get("end"))) + "'"
-    # grp = "'" + (str(request.args.get("grpby"))) + "'"
-    d1 = "'2020-07-01'"
-    d2 = "'2020-07-14'"
-    grp = "'job'"
+    d1 = "'" + (str(request.args.get("start"))) + "'"
+    d2 = "'" + (str(request.args.get("end"))) + "'"
+    grp = "'" + (str(request.args.get("grpby"))) + "'"
 
     print(type(d1), type(grp))
 
@@ -234,19 +231,12 @@ def fuelreport():
 @app.route('/teamade', methods=['GET', 'POST'])
 @cross_origin()
 def displayteamade():
-    cur = mysql.connection.cursor()
-    cur1 = mysql.connection.cursor()
-    cur2 = mysql.connection.cursor()
-    cur3 = mysql.connection.cursor()
-    cur4 = mysql.connection.cursor()
+    cur = mysql.connection.cursor()   
     rv = []
 
-    # d1 = "'" + (str(request.args.get("start"))) + "'"
-      #d11 = 
+    d1 = "'" + (str(request.args.get("start"))) + "'"
     d0 = "'2020-03-01'"  # start date current year
     d00 = "'2019-03-01'"  # start date last year
-    d1 = '2020-07-03'  # current date
-    #d11 = "'2019-07-02'"  # end date last year
     d11 = str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0]
 
 
@@ -259,28 +249,28 @@ def displayteamade():
     # [TM TODATE]
     val1 = "sum(TMENTRY.TM_VAL)"
     tab1 = "TMENTRY"
-    cur1.execute(f'''select {val1} from {tab1} where TM_DATE >= {d0} AND TM_DATE <= {d1} ''')
-    rv.append(cur1.fetchall()[0][0])
+    cur.execute(f'''select {val1} from {tab1} where TM_DATE >= {d0} AND TM_DATE <= {d1} ''')
+    rv.append(cur.fetchall()[0][0])
 
     # [TM TODATE LAST YEAR]
     val2 = "sum(TMENTRY.TM_VAL)"
     tab2 = "TMENTRY"
-    cur2.execute(f'''select {val2} from {tab2} where TM_DATE >= {d00} AND TM_DATE <= {d11} ''')
-    rv.append(cur2.fetchall()[0][0])
+    cur.execute(f'''select {val2} from {tab2} where TM_DATE >= {d00} AND TM_DATE <= {d11} ''')
+    rv.append(cur.fetchall()[0][0])
 
     # [RECOVERY % TODAY
     val3 = " ROUND(SUM(FIELDENTRY.GL_VAL)/SUM(TMENTRY.TM_VAL),4) * 100 "
     tab3 = "TMENTRY , FIELDENTRY"
     joi3 = "(TMENTRY.TM_DATE = FIELDENTRY.DATE) and (TMENTRY.TM_DATE="
-    cur3.execute(f'''select {val3} from {tab3} where {joi3}{d1})''')
-    rv.append(cur3.fetchall()[0][0])
+    cur.execute(f'''select {val3} from {tab3} where {joi3}{d1})''')
+    rv.append(cur.fetchall()[0][0])
 
     # [RECOVERY % TO DATE
     val4 = " ROUND(SUM(FIELDENTRY.GL_VAL)/SUM(TMENTRY.TM_VAL),4) * 100 "
     tab4 = 'TMENTRY , FIELDENTRY'
     joi4 = "(TMENTRY.TM_DATE = FIELDENTRY.DATE) and (TMENTRY.TM_DATE>="
-    cur4.execute(f'''select {val4} from {tab4} where {joi4}{d0}) and (TMENTRY.TM_DATE<={d1})''')
-    rv.append(cur4.fetchall()[0][0])
+    cur.execute(f'''select {val4} from {tab4} where {joi4}{d0}) and (TMENTRY.TM_DATE<={d1})''')
+    rv.append(cur.fetchall()[0][0])
 
     def sids_converter(o):
         if isinstance(o, datetime.date):
@@ -298,14 +288,8 @@ def displayteamade():
 
 def greenleaf():
     cur = mysql.connection.cursor()
-    cur1 = mysql.connection.cursor()
-    cur2 = mysql.connection.cursor()
-    cur3 = mysql.connection.cursor()
     d1 = "'" + (str(request.args.get("start"))) + "'"
-    # d11 = "'" + (str(request.args.get("end"))) + "'"
-    d1 = "'2020-07-01'"
-    d11 = "'2019-07-01'"
-    d2 = "'2020-07-03'"
+    d11 = str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0]
 
     #DIV NAME
     val = "DIVTAB.DIV_NAME"
@@ -320,23 +304,23 @@ def greenleaf():
     tab1 = "DIVTAB, SECTAB, FIELDENTRY"
     joi1 = "(FIELDENTRY.SEC_ID=SECTAB.SEC_ID) AND (SECTAB.DIV_ID = DIVTAB.DIV_ID)"
     job1 = "FIELDENTRY.JOB_ID = 1"
-    cur1.execute(f'''select {val1} from {tab1} where {joi1} AND {job1} and date = {d1} GROUP BY SECTAB.DIV_ID''')
-    rv1 = cur1.fetchall()
+    cur.execute(f'''select {val1} from {tab1} where {joi1} AND {job1} and date = {d1} GROUP BY SECTAB.DIV_ID''')
+    rv1 = cur.fetchall()
 
     #GL TODAY LAST YEA1R
     val2 = "SUM(FIELDENTRY.GL_VAL)"
     tab2 = "FIELDENTRY, DIVTAB, SECTAB"
     joi2 = "(FIELDENTRY.SEC_ID=SECTAB.SEC_ID) AND (SECTAB.DIV_ID = DIVTAB.DIV_ID)"
     job2 = "FIELDENTRY.JOB_ID = 1"
-    cur2.execute(f'''select {val2} from {tab2} where {joi2} AND {job2} and date = {d11} GROUP BY SECTAB.DIV_ID''')
-    rv2 = cur2.fetchall()
+    cur.execute(f'''select {val2} from {tab2} where {joi2} AND {job2} and date = {d11} GROUP BY SECTAB.DIV_ID''')
+    rv2 = cur.fetchall()
 
     #FINE LEAF% TODAYS GL
     val3 = "sum(FL_PER)"
     tab3 = "FLENTRY, DIVTAB"
     joi3 = "(FLENTRY.DIV_ID = DIVTAB.DIV_ID)"
-    cur3.execute(f'''select {val3} from {tab3} where {joi3} and date = {d1} GROUP BY DIVTAB.DIV_ID''')
-    rv3 = cur3.fetchall()
+    cur.execute(f'''select {val3} from {tab3} where {joi3} and date = {d1} GROUP BY DIVTAB.DIV_ID''')
+    rv3 = cur.fetchall()
 
     w = [i[0] for i in rv]
     x = [i1[0] for i1 in rv1]
@@ -412,7 +396,6 @@ def gradepercent():
 @cross_origin()
 def invoicelist():
       cur = mysql.connection.cursor()
-
       con = "INVOICEENTRY.INVOICE_NO, TEAGRADETAB.TEAGRADE_NAME"
       val = "INVOICEENTRY.NET_WT , INVOICEENTRY.PAPERSACKS, INVOICEENTRY.PACKDATEE"
       tab = "INVOICEENTRY,TEAGRADETAB"

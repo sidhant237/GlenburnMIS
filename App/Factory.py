@@ -14,9 +14,7 @@ def displayfactory():
       d1 = "'" + (str(request.args.get("start"))) + "'"
       d0 = "'2020-07-01'"  # start date current year
       d00 = "'2019-03-01'"  # start date last year
-      #d1 = "'2020-07-01'"  # current date
-      d11 = "'2019-07-01'"  # end date last year
-      d2 = "'2020-07-01'"
+      d11 = str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0]
 
       cur = mysql.connection.cursor()     
       rv = []
