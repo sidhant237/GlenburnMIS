@@ -4,6 +4,7 @@ from App import app, mysql, mail
 import json, datetime
 from flask_mail import Message
 import pandas as pd
+from dateutil.relativedelta import relativedelta
 
 #9m
 @app.route('/email', methods=['GET', 'POST'])
