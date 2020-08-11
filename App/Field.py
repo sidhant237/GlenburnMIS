@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from flask_cors import cross_origin
 from App import app, mysql
+from dateutil.relativedelta import relativedelta
 import json, datetime
 
 
@@ -246,7 +247,8 @@ def displayteamade():
     d00 = "'2019-03-01'"  # start date last year
     d1 = '2020-07-03'  # current date
     #d11 = "'2019-07-02'"  # end date last year
-    d11 = str((datetime.datetime.strptime(d1, '%Y-%m-%d') - timedelta(year=1)))
+    d11 = str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0]
+
 
     # [TM TODAY]
     val = "TMENTRY.TM_VAL "
@@ -408,7 +410,6 @@ def gradepercent():
 #11
 @app.route('/invoicelist',methods=['GET', 'POST'])
 @cross_origin()
-
 def invoicelist():
       cur = mysql.connection.cursor()
 
@@ -428,3 +429,22 @@ def invoicelist():
       for result in rv:
             json_data.append(dict(zip(row_headers, result)))
       return json.dumps(json_data, default=sids_converter)
+
+
+
+@app.route('/dates',methods=['GET'])
+@cross_origin()
+def get_dates():
+    cur = mysql.connection.cursor()
+    cur.execute("select * from Date")
+    headers = ['table', 'start', 'end']
+    rv = cur.fetchall()
+    json_data = []
+
+    def sids_converter(o):
+        if isinstance(o, datetime.date):
+                return str(o.year) + str("/") + str(o.month) + str("/") + str(o.day)
+
+    for result in rv:
+        json_data.append(dict(zip(headers, result)))
+    return json.dumps(json_data, default=sids_converter)
