@@ -234,9 +234,17 @@ def displayteamade():
     cur = mysql.connection.cursor()   
     rv = []
 
+<<<<<<< HEAD
     d1 = "'" + (str(request.args.get("start"))) + "'"
     d0 = "'2020-03-01'"  # start date current year
     d00 = "'2019-03-01'"  # start date last year
+=======
+    d1 = request.args.get("start")
+    d0 = "'2020-03-01'"  # start date current year
+    d00 = "'2019-03-01'"  # start date last year
+    #d1 = '2020-07-03'  # current date
+    #d11 = "'2019-07-02'"  # end date last year
+>>>>>>> dc0686b0d7ff3d9ddaa61a1967bfd72ec26fc1cf
     d11 = str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0]
 
 
