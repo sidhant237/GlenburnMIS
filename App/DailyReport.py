@@ -11,10 +11,12 @@ from dateutil.relativedelta import relativedelta
 
 def dailyreport():
     cur = mysql.connection.cursor()
-    d1 = "'" + (str(request.args.get("start"))) + "'"
-    d11 = str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0]
+    d1 = request.args.get("start") #"2020-07-01"
+    d11 = "'" + str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0] + "'"
+    d1 = "'" + d1 + "'"
     d0 = "'2020-03-01'"  # start date current year
     d00 = "'2019-03-01'"  # start date last year
+    d2 = "'2020-07-01'"
     
     #DIV NAME
     val = "DIVTAB.DIV_NAME"

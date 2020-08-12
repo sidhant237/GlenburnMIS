@@ -48,28 +48,16 @@ def cultivationgroup():
 
     print(type(d1), type(grp))
 
-    if grp == "'job'":
-        con = "Jobtab.Job_Name"
-        val = "sum(FieldEntry.Mnd_Val)"
-        val1 = "sum(FieldEntry.Area_Val)"
-        fom = "ROUND((sum(FieldEntry.Mnd_Val))/(sum(FieldEntry.Area_Val)),2)"
-        tab = "FieldEntry,SquTab,Jobtab,SecTab,DivTab"
-        joi = "FieldEntry.Squ_ID = SquTab.Squ_ID AND FieldEntry.Job_ID=Jobtab.Job_ID AND FieldEntry.Sec_ID=SecTab.Sec_ID AND DivTab.Div_ID=SecTab.Div_ID"
-        job = "(FieldEntry.Job_ID = 2 or FieldEntry.Job_ID = 3 or FieldEntry.Job_ID = 4)"
-        cur.execute(f'''select {con} , {val} , {val1} , {fom}  from {tab} where {joi} and date >={d1} and date <={d2} and {job} group by FieldEntry.Job_ID''')
-        rv = cur.fetchall()
-        row_headers = ['Job_Name', 'Mandays', 'AreaCovered', 'MndArea']
-
-    elif grp == "'section'":
-        con = "SecTab.Sec_Name"
-        val = "sum(FieldEntry.Mnd_Val)"
-        val1 = "sum(FieldEntry.Area_Val)"
-        fom = "ROUND((SUM(FieldEntry.Mnd_Val))/(SUM(FieldEntry.Area_Val)),2)"
-        tab = "FieldEntry,SquTab,Jobtab,SecTab,DivTab"
-        joi = "FieldEntry.Squ_ID = SquTab.Squ_ID AND FieldEntry.Job_ID=Jobtab.Job_ID AND FieldEntry.Sec_ID=SecTab.Sec_ID AND DivTab.Div_ID=SecTab.Div_ID"
-        cur.execute(f'''select {con} , {val} , {val1} , {fom}  from {tab} where {joi} and date >={d1} and date <={d2} group by FieldEntry.Sec_ID''')
-        rv = cur.fetchall()
-        row_headers = ['Section_Name', 'Mandays', 'AreaCovered', 'MndArea']
+    con = "Jobtab.Job_Name"
+    val = "sum(FieldEntry.Mnd_Val)"
+    val1 = "sum(FieldEntry.Area_Val)"
+    fom = "ROUND((sum(FieldEntry.Mnd_Val))/(sum(FieldEntry.Area_Val)),2)"
+    tab = "FieldEntry,SquTab,Jobtab,SecTab,DivTab"
+    joi = "FieldEntry.Squ_ID = SquTab.Squ_ID AND FieldEntry.Job_ID=Jobtab.Job_ID AND FieldEntry.Sec_ID=SecTab.Sec_ID AND DivTab.Div_ID=SecTab.Div_ID"
+    job = "(FieldEntry.Job_ID = 2 or FieldEntry.Job_ID = 3 or FieldEntry.Job_ID = 4)"
+    cur.execute(f'''select {con} , {val} , {val1} , {fom}  from {tab} where {joi} and date >={d1} and date <={d2} and {job} group by FieldEntry.Job_ID''')
+    rv = cur.fetchall()
+    row_headers = ['Job_Name', 'Mandays', 'AreaCovered', 'MndArea']
 
     json_data = []
 
@@ -234,12 +222,11 @@ def displayteamade():
     cur = mysql.connection.cursor()   
     rv = []
 
-    d1 = request.args.get("start")
+    d1 = request.args.get("start") 
+    d11 = "'" + str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0] + "'"
+    d1 = "'" + d1 + "'"
     d0 = "'2020-03-01'"  # start date current year
     d00 = "'2019-03-01'"  # start date last year
-    #d1 = '2020-07-03'  # current date
-    #d11 = "'2019-07-02'"  # end date last year
-    d11 = str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0]
 
 
     # [TM TODAY]
@@ -290,8 +277,9 @@ def displayteamade():
 
 def greenleaf():
     cur = mysql.connection.cursor()
-    d1 = "'" + (str(request.args.get("start"))) + "'"
-    d11 = str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0]
+    d1 = request.args.get("start") #"2020-07-01"
+    d11 = "'" + str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0] + "'"
+    d1 = "'" + d1 + "'"
 
     #DIV NAME
     val = "DIVTAB.DIV_NAME"
@@ -397,23 +385,25 @@ def gradepercent():
 @app.route('/invoicelist',methods=['GET', 'POST'])
 @cross_origin()
 def invoicelist():
-      cur = mysql.connection.cursor()
-      con = "INVOICEENTRY.INVOICE_NO, TEAGRADETAB.TEAGRADE_NAME"
-      val = "INVOICEENTRY.NET_WT , INVOICEENTRY.PAPERSACKS, INVOICEENTRY.PACKDATEE"
-      tab = "INVOICEENTRY,TEAGRADETAB"
-      joi = "INVOICEENTRY.TEAGRADE_ID=TEAGRADETAB.TEAGRADE_ID"
-      cur.execute(f'''select {con} , {val} from {tab} where {joi} and and date >={d1} and date <={d2}''')
-      row_headers = ['InvNo','Grade', 'NetWt','Papersacks','Packdate']
-      rv = cur.fetchall()
-      json_data = []
+    d1 = "'" + (str(request.args.get("start"))) + "'"
+    d2 = "'" + (str(request.args.get("end"))) + "'"  
+    cur = mysql.connection.cursor()
+    con = "INVOICEENTRY.INVOICE_NO, TEAGRADETAB.TEAGRADE_NAME"
+    val = "INVOICEENTRY.NET_WT , INVOICEENTRY.PAPERSACKS, INVOICEENTRY.PACKDATE"
+    tab = "INVOICEENTRY,TEAGRADETAB"
+    joi = "INVOICEENTRY.TEAGRADE_ID=TEAGRADETAB.TEAGRADE_ID"
+    cur.execute(f'''select {con} , {val} from {tab} where {joi} and INVOICEENTRY.PACKDATE >={d1} and INVOICEENTRY.PACKDATE <={d2}''')
+    row_headers = ['InvNo','Grade', 'NetWt','Papersacks','Packdate']
+    rv = cur.fetchall()
+    json_data = []
 
-      def sids_converter(o):
-            if isinstance(o, datetime.date):
-                  return str(o.year) + str("/") + str(o.month) + str("/") + str(o.day)
+    def sids_converter(o):
+        if isinstance(o, datetime.date):
+                return str(o.year) + str("/") + str(o.month) + str("/") + str(o.day)
 
-      for result in rv:
-            json_data.append(dict(zip(row_headers, result)))
-      return json.dumps(json_data, default=sids_converter)
+    for result in rv:
+        json_data.append(dict(zip(row_headers, result)))
+    return json.dumps(json_data, default=sids_converter)
 
 
 

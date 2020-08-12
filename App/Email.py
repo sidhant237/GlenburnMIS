@@ -38,13 +38,9 @@ def fuel_report():
 
 def factory():
     cur = mysql.connection.cursor()
-    cur1 = mysql.connection.cursor()
-    cur2 = mysql.connection.cursor()
-    cur3 = mysql.connection.cursor()
-    # d1 = "'" + (str(request.args.get("start"))) + "'"
-    # d11 = "'" + (str(request.args.get("end"))) + "'"
-    d1 = "'2020-07-01'"
-    d11 = "'2019-07-01'"
+    d1 = request.args.get("start") #"2020-07-01"
+    d11 = "'" + str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0] + "'"
+    d1 = "'" + d1 + "'"
     d2 = "'2020-07-03'"
 
     #DIV NAME
@@ -60,23 +56,23 @@ def factory():
     tab1 = "DivTab, SecTab, FieldEntry"
     joi1 = "(FieldEntry.Sec_ID=SecTab.Sec_ID) AND (SecTab.Div_ID = DivTab.Div_ID)"
     job1 = "FieldEntry.Job_ID = 1"
-    cur1.execute(f'''select {val1} from {tab1} where {joi1} AND {job1} and date = {d1} GROUP BY SecTab.Div_ID''')
-    rv1 = cur1.fetchall()
+    cur.execute(f'''select {val1} from {tab1} where {joi1} AND {job1} and date = {d1} GROUP BY SecTab.Div_ID''')
+    rv1 = cur.fetchall()
 
     #GL TODAY LAST YEA1R
     val2 = "SUM(FieldEntry.GL_Val)"
     tab2 = "FieldEntry, DivTab, SecTab"
     joi2 = "(FieldEntry.Sec_ID=SecTab.Sec_ID) AND (SecTab.Div_ID = DivTab.Div_ID)"
     job2 = "FieldEntry.Job_ID = 1"
-    cur2.execute(f'''select {val2} from {tab2} where {joi2} AND {job2} and date = {d11} GROUP BY SecTab.Div_ID''')
-    rv2 = cur2.fetchall()
+    cur.execute(f'''select {val2} from {tab2} where {joi2} AND {job2} and date = {d11} GROUP BY SecTab.Div_ID''')
+    rv2 = cur.fetchall()
 
     #FINE LEAF% TODAYS GL
     val3 = "sum(FL_Per)"
     tab3 = "FLEntry, DivTab"
     joi3 = "(FLEntry.Div_ID = DivTab.Div_ID)"
-    cur3.execute(f'''select {val3} from {tab3} where {joi3} and date = {d2} GROUP BY DivTab.Div_ID''')
-    rv3 = cur3.fetchall()
+    cur.execute(f'''select {val3} from {tab3} where {joi3} and date = {d2} GROUP BY DivTab.Div_ID''')
+    rv3 = cur.fetchall()
 
     w = [i[0] for i in rv]
     x = [i1[0] for i1 in rv1]
@@ -93,51 +89,45 @@ def factory():
 
 
 #8m
-    cura = mysql.connection.cursor()
-    cura1 = mysql.connection.cursor()
-    cura2 = mysql.connection.cursor()
-    cura3 = mysql.connection.cursor()
-    cura4 = mysql.connection.cursor()
+    cur = mysql.connection.cursor()    
     rva = []
-
-    # d1 = "'" + (str(request.args.get("start"))) + "'"
 
     d0 = "'2020-03-01'"  # start date current year
     d00 = "'2019-03-01'"  # start date last year
-    d1 = "'2020-07-03'"  # current date
-    d11 = "'2019-07-02'"  # end date last year
+    d1 = "'" + (str(request.args.get("start"))) + "'"
+    d11 = str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0]
 
     # [TM TODAY]
     vala = "TMEntry.TM_Val "
     taba = "TMEntry"
-    cura.execute(f'''select {vala} from {taba} where TM_Date = {d1} ''')
-    rva.append(cura.fetchall()[0][0])
+    cur.execute(f'''select {vala} from {taba} where TM_Date = {d1} ''')
+    rva.append(cur.fetchall()[0][0])
 
     # [TM TODATE]
     vala1 = "sum(TMEntry.TM_Val)"
     taba1 = "TMEntry"
-    cura1.execute(f'''select {vala1} from {taba1} where TM_Date >= {d0} AND TM_Date <= {d1} ''')
-    rva.append(cura1.fetchall()[0][0])
+    cur.execute(f'''select {vala1} from {taba1} where TM_Date >= {d0} AND TM_Date <= {d1} ''')
+    rva.append(cur.fetchall()[0][0])
 
     # [TM TODATE LAST YEAR]
     vala2 = "sum(TMEntry.TM_Val)"
     taba2 = "TMEntry"
-    cura2.execute(f'''select {vala2} from {taba2} where TM_Date >= {d00} AND TM_Date <= {d11} ''')
-    rva.append(cura2.fetchall()[0][0])
+    cur.execute(f'''select {vala2} from {taba2} where TM_Date >= {d00} AND TM_Date <= {d11} ''')
+    rva.append(cur.fetchall()[0][0])
 
     # [RECOVERY % TODAY
     vala3 = " ROUND(SUM(FieldEntry.GL_Val)/SUM(TMEntry.TM_Val),4) * 100 "
     taba3 = "TMEntry , FieldEntry"
     joia3 = "(TMEntry.TM_Date = FieldEntry.Date) and (TMEntry.TM_Date="
-    cura3.execute(f'''select {vala3} from {taba3} where {joia3}{d1})''')
-    rva.append(cura3.fetchall()[0][0])
+    cur.execute(f'''select {vala3} from {taba3} where {joia3}{d1})''')
+    rva.append(cur.fetchall()[0][0])
 
     # [RECOVERY % TO DATE
     vala4 = " ROUND(SUM(FieldEntry.GL_Val)/SUM(TMEntry.TM_Val),4) * 100 "
     taba4 = 'TMEntry , FieldEntry'
     joia4 = "(TMEntry.TM_Date = FieldEntry.Date) and (TMEntry.TM_Date>="
-    cura4.execute(f'''select {vala4} from {taba4} where {joia4}{d0}) and (TMEntry.TM_Date<={d1})''')
-    rva.append(cura4.fetchall()[0][0])
+    cur.execute(f'''select {vala4} from {taba4} where {joia4}{d0}) and (TMEntry.TM_Date<={d1})''')
+    rva.append(cur.fetchall()[0][0])
 
     column_headers = ['TMToday', 'TMTodate', 'TMTodateLY', 'RecoveryToday', 'RecoveryTodate']
     json_data1 = []
@@ -147,21 +137,17 @@ def factory():
 #10m
 
     curb = mysql.connection.cursor()
-    curb1 = mysql.connection.cursor()
-    curb2 = mysql.connection.cursor()
-    # d1 = "'" + (str(request.args.get("start"))) + "'"
-    # d2 = "'" + (str(request.args.get("end"))) + "'"
-    d1 = "'2020-07-01'"
-    d2 = "'2020-07-03'"
+    d1 = "'" + (str(request.args.get("start"))) + "'"
+    d2 = "'" + (str(request.args.get("end"))) + "'"
 
     curb.execute(f"SELECT SUM(SortEntry.Sort_Kg) FROM SortEntry WHERE date >={d1} and date <={d2} ")
     rvb = curb.fetchall()
 
-    curb1.execute(f"SELECT SUM(SortEntry.Sort_Kg) FROM SortEntry, TeaGradeTab WHERE SortEntry.TeaGrade_ID = TeaGradeTab.TeaGrade_ID and date >={d1} and date <={d2} group by TeaGradeTab.TeaGrade_Name ")
-    rvb1 = curb1.fetchall()
+    cur.execute(f"SELECT SUM(SortEntry.Sort_Kg) FROM SortEntry, TeaGradeTab WHERE SortEntry.TeaGrade_ID = TeaGradeTab.TeaGrade_ID and date >={d1} and date <={d2} group by TeaGradeTab.TeaGrade_Name ")
+    rvb1 = cur.fetchall()
 
-    curb2.execute(f"SELECT TeaGradeTab.TeaGrade_Name FROM SortEntry, TeaGradeTab WHERE SortEntry.TeaGrade_ID = TeaGradeTab.TeaGrade_ID and date >={d1} and date <={d2} group by TeaGradeTab.TeaGrade_Name ")
-    rvb2 = curb2.fetchall()
+    cur.execute(f"SELECT TeaGradeTab.TeaGrade_Name FROM SortEntry, TeaGradeTab WHERE SortEntry.TeaGrade_ID = TeaGradeTab.TeaGrade_ID and date >={d1} and date <={d2} group by TeaGradeTab.TeaGrade_Name ")
+    rvb2 = cur.fetchall()
 
     xb = [s[0] for s in rvb]
     yb = [i[0] for i in rvb1]
@@ -182,7 +168,7 @@ def factory():
 
 #5m
 
-    curc = mysql.connection.cursor()
+    cur = mysql.connection.cursor()
     #d1 = "'" + (str(request.args.get("start"))) + "'"
     #d2 = "'" + (str(request.args.get("end"))) + "'"
     d1 = "'2020-07-01'"
@@ -192,10 +178,10 @@ def factory():
     valc = "SUM(FieldEntry.Mnd_Val)"
     tabc = "FieldEntry,Jobtab"
     joic = "FieldEntry.Job_ID=Jobtab.Job_ID"
-    curc.execute(f'''select {conc} , {valc} from {tabc} where {joic} and date >={d1} and date <={d2} group by FieldEntry.Job_ID''')
+    cur.execute(f'''select {conc} , {valc} from {tabc} where {joic} and date >={d1} and date <={d2} group by FieldEntry.Job_ID''')
     row_headers = ['Job_Name', 'Mandays']
 
-    rvc = curc.fetchmany(5)
+    rvc = cur.fetchmany(5)
     json_data3 = []
 
     for result in rvc:

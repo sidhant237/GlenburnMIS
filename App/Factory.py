@@ -12,11 +12,12 @@ from dateutil.relativedelta import relativedelta
 @cross_origin()
 def displayfactory():      
 
-      d1 = "'" + (str(request.args.get("start"))) + "'"
+      d1 = request.args.get("start") #"2020-07-01"
+      d11 = "'" + str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0] + "'"
+      d1 = "'" + d1 + "'"
       d0 = "'2020-07-01'"  # start date current year
       d00 = "'2019-03-01'"  # start date last year
-      d11 = str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0]
-
+      
       cur = mysql.connection.cursor()     
       rv = []
       ##TEA MADE
@@ -112,7 +113,7 @@ def displayfactory():
       cur = mysql.connection.cursor()
       
       #SUM-ALLGRADES-DATERANGE
-      cur.execute(f"SELECT SUM(SORTENTRY.SORT_KG) FROM SORTENTRY WHERE date >={d1} and date <={d2} ")
+      cur.execute(f"SELECT SUM(SORTENTRY.SORT_KG) FROM SORTENTRY WHERE date ={d1} ")
       rv = cur.fetchall()
 
       #SUM-ALLGRADES-DATE
@@ -120,7 +121,7 @@ def displayfactory():
       rv3 = cur.fetchall()
 
       #SUM-PERGRADE-DATERANGE
-      cur.execute(f"SELECT SUM(SORTENTRY.SORT_KG) FROM SORTENTRY, TEAGRADETAB WHERE SORTENTRY.TEAGRADE_ID = TEAGRADETAB.TEAGRADE_ID and date >={d1} and date <={d2} group by TEAGRADETAB.TEAGRADE_NAME ")
+      cur.execute(f"SELECT SUM(SORTENTRY.SORT_KG) FROM SORTENTRY, TEAGRADETAB WHERE SORTENTRY.TEAGRADE_ID = TEAGRADETAB.TEAGRADE_ID and date ={d1} group by TEAGRADETAB.TEAGRADE_NAME ")
       rv1 = cur.fetchall()
 
       #PERGRADE-DATE
@@ -128,7 +129,7 @@ def displayfactory():
       rv4 = cur.fetchall()      
 
       #GRADE-NAME
-      cur.execute(f"SELECT TEAGRADETAB.TEAGRADE_NAME FROM SORTENTRY, TEAGRADETAB WHERE SORTENTRY.TEAGRADE_ID = TEAGRADETAB.TEAGRADE_ID and date >={d1} and date <={d2} group by TEAGRADETAB.TEAGRADE_NAME ")
+      cur.execute(f"SELECT TEAGRADETAB.TEAGRADE_NAME FROM SORTENTRY, TEAGRADETAB WHERE SORTENTRY.TEAGRADE_ID = TEAGRADETAB.TEAGRADE_ID and date ={d1}group by TEAGRADETAB.TEAGRADE_NAME ")
       rv2 = cur.fetchall()
 
       x = [s[0] for s in rv]
