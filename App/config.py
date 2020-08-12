@@ -17,8 +17,8 @@ MYSQL_DB = "GlenDB"
 #mail sending configuration
 MAIL_SERVER ='smtp.gmail.com'
 MAIL_PORT = 465
-MAIL_USERNAME = ''
-MAIL_PASSWORD = ''
+MAIL_USERNAME = 'glenburnfinetea@gmail.com'
+MAIL_PASSWORD = 'glenburn1'
 MAIL_USE_TLS = False
 MAIL_USE_SSL = True
 

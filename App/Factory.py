@@ -11,7 +11,6 @@ from dateutil.relativedelta import relativedelta
 @app.route('/factory', methods=['GET', 'POST'])
 @cross_origin()
 def displayfactory():      
-
       d1 = request.args.get("start") #"2020-07-01"
       d11 = "'" + str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0] + "'"
       d1 = "'" + d1 + "'"
