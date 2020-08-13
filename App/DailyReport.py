@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request, jsonify
 from flask_cors import cross_origin
 from App import app, mysql
-import json, datetime
-from dateutil.relativedelta import relativedelta
+import json, Datetime
+from Dateutil.relativedelta import relativedelta
 
 
 #9## DAILYRPEORT ###
@@ -19,34 +19,34 @@ def dailyreport():
     d2 = "'2020-07-01'"
     
     #DIV NAME
-    val = "DIVTAB.DIV_NAME"
-    tab = "DIVTAB, SECTAB, FIELDENTRY"
-    joi = "(FIELDENTRY.SEC_ID=SECTAB.SEC_ID) AND (SECTAB.DIV_ID = DIVTAB.DIV_ID)"
-    job = "FIELDENTRY.JOB_ID = 1"
-    cur.execute(f'''select {val} from {tab} where {joi} AND {job} and date = {d1} GROUP BY SECTAB.DIV_ID''')
+    val = "DivTab.Div_name"
+    tab = "DivTab, SecTab, FieldEntry"
+    joi = "(FieldEntry.Sec_ID=SecTab.Sec_ID) AND (SecTab.Div_ID = DivTab.Div_ID)"
+    job = "FieldEntry.Job_ID = 1"
+    cur.execute(f'''select {val} from {tab} where {joi} AND {job} and date = {d1} GROUP BY SecTab.Div_ID''')
     rv = cur.fetchall()
 
     # GL TODAY
-    val1 = "SUM(FIELDENTRY.GL_VAL)"
-    tab1 = "DIVTAB, SECTAB, FIELDENTRY"
-    joi1 = "(FIELDENTRY.SEC_ID=SECTAB.SEC_ID) AND (SECTAB.DIV_ID = DIVTAB.DIV_ID)"
-    job1 = "FIELDENTRY.JOB_ID = 1"
-    cur.execute(f'''select {val1} from {tab1} where {joi1} AND {job1} and date = {d1} GROUP BY SECTAB.DIV_ID''')
+    val1 = "SUM(FieldEntry.GL_Val)"
+    tab1 = "DivTab, SecTab, FieldEntry"
+    joi1 = "(FieldEntry.Sec_ID=SecTab.Sec_ID) AND (SecTab.Div_ID = DivTab.Div_ID)"
+    job1 = "FieldEntry.Job_ID = 1"
+    cur.execute(f'''select {val1} from {tab1} where {joi1} AND {job1} and Date = {d1} GROUP BY SecTab.Div_ID''')
     rv1 = cur.fetchall()
 
     #GL TODAY LAST YEA1R
-    val2 = "SUM(FIELDENTRY.GL_VAL)"
-    tab2 = "FIELDENTRY, DIVTAB, SECTAB"
-    joi2 = "(FIELDENTRY.SEC_ID=SECTAB.SEC_ID) AND (SECTAB.DIV_ID = DIVTAB.DIV_ID)"
-    job2 = "FIELDENTRY.JOB_ID = 1"
-    cur.execute(f'''select {val2} from {tab2} where {joi2} AND {job2} and date = {d11} GROUP BY SECTAB.DIV_ID''')
+    val2 = "sum(FieldEntry.GL_Val)"
+    tab2 = "FieldEntry, DivTab, SecTab"
+    joi2 = "(FieldEntry.Sec_ID=SecTab.Sec_ID) AND (SecTab.Div_ID = DivTab.Div_ID)"
+    job2 = "FieldEntry.Job_ID = 1"
+    cur.execute(f'''select {val2} from {tab2} where {joi2} AND {job2} and Date = {d11} GROUP BY SecTab.Div_ID''')
     rv2 = cur.fetchall()
 
     #FINE LEAF% TODAYS GL
-    val3 = "sum(FL_PER)"
-    tab3 = "FLENTRY, DIVTAB"
-    joi3 = "(FLENTRY.DIV_ID = DIVTAB.DIV_ID)"
-    cur.execute(f'''select {val3} from {tab3} where {joi3} and date = {d1} GROUP BY DIVTAB.DIV_ID''')
+    val3 = "sum(FL_Per)"
+    tab3 = "FLEntry, DivTab"
+    joi3 = "(FLEntry.Div_ID = DivTab.Div_ID)"
+    cur.execute(f'''select {val3} from {tab3} where {joi3} and Date = {d1} GROUP BY DivTab.Div_ID''')
     rv3 = cur.fetchall()
 
     w = [i[0] for i in rv]
@@ -68,39 +68,39 @@ def dailyreport():
     rv = []
 
     # [TM TODAY]
-    val = "TMENTRY.TM_VAL "
-    tab = "TMENTRY"
-    cur.execute(f'''select {val} from {tab} where TM_DATE = {d1} ''')
+    val = "TMEntry.TM_Val "
+    tab = "TMEntry"
+    cur.execute(f'''select {val} from {tab} where TM_Date = {d1} ''')
     rv.append(cur.fetchall()[0][0])
 
     # [TM TODATE]
-    val1 = "sum(TMENTRY.TM_VAL)"
-    tab1 = "TMENTRY"
-    cur.execute(f'''select {val1} from {tab1} where TM_DATE >= {d0} AND TM_DATE <= {d1} ''')
+    val1 = "sum(TMEntry.TM_Val)"
+    tab1 = "TMEntry"
+    cur.execute(f'''select {val1} from {tab1} where TM_Date >= {d0} AND TM_Date <= {d1} ''')
     rv.append(cur.fetchall()[0][0])
 
-    # [TM TODATE LAST YEAR]
-    val2 = "sum(TMENTRY.TM_VAL)"
-    tab2 = "TMENTRY"
-    cur.execute(f'''select {val2} from {tab2} where TM_DATE >= {d00} AND TM_DATE <= {d11} ''')
+    # [TM TODate LAST YEAR]
+    val2 = "sum(TMEntry.TM_Val)"
+    tab2 = "TMEntry"
+    cur.execute(f'''select {val2} from {tab2} where TM_Date >= {d00} AND TM_Date <= {d11} ''')
     rv.append(cur.fetchall()[0][0])
 
     # [RECOVERY % TODAY
-    val3 = " ROUND(SUM(FIELDENTRY.GL_VAL)/SUM(TMENTRY.TM_VAL),4) * 100 "
-    tab3 = "TMENTRY , FIELDENTRY"
-    joi3 = "(TMENTRY.TM_DATE = FIELDENTRY.DATE) and (TMENTRY.TM_DATE="
+    val3 = " ROUND(SUM(FieldEntry.GL_Val)/SUM(TMEntry.TM_Val),4) * 100 "
+    tab3 = "TMEntry , FieldEntry"
+    joi3 = "(TMEntry.TM_Date = FieldEntry.Date) and (TMEntry.TM_Date="
     cur.execute(f'''select {val3} from {tab3} where {joi3}{d1})''')
     rv.append(cur.fetchall()[0][0])
 
-    # [RECOVERY % TO DATE
-    val4 = " ROUND(SUM(FIELDENTRY.GL_VAL)/SUM(TMENTRY.TM_VAL),4) * 100 "
-    tab4 = 'TMENTRY , FIELDENTRY'
-    joi4 = "(TMENTRY.TM_DATE = FIELDENTRY.DATE) and (TMENTRY.TM_DATE>="
-    cur.execute(f'''select {val4} from {tab4} where {joi4}{d0}) and (TMENTRY.TM_DATE<={d1})''')
+    # [RECOVERY % TO Date
+    val4 = " ROUND(SUM(FieldEntry.GL_Val)/SUM(TMEntry.TM_Val),4) * 100 "
+    tab4 = 'TMEntry , FieldEntry'
+    joi4 = "(TMEntry.TM_Date = FieldEntry.Date) and (TMEntry.TM_Date>="
+    cur.execute(f'''select {val4} from {tab4} where {joi4}{d0}) and (TMEntry.TM_Date<={d1})''')
     rv.append(cur.fetchall()[0][0])
 
     def sids_converter(o):
-        if isinstance(o, datetime.date):
+        if isinstance(o, Datetime.Date):
             return str(o.year) + str("/") + str(o.month) + str("/") + str(o.day)
 
     column_headers =  ['TMToday', 'TMTodate', 'TMTodateLY', 'RecoveryToday', 'RecoveryTodate']
@@ -113,11 +113,11 @@ def dailyreport():
 
     cur = mysql.connection.cursor()
     
-    con = "JOBTAB.JOB_NAME"
-    val = "SUM(FIELDENTRY.MND_VAL)"
-    tab = "FIELDENTRY,JOBTAB"
-    joi = "FIELDENTRY.JOB_ID=JOBTAB.JOB_ID"
-    cur.execute(f'''select {con} , {val} from {tab} where {joi} and date >={d1} group by FIELDENTRY.JOB_ID''')
+    con = "Jobtab.JOB_NAME"
+    val = "SUM(FieldEntry.Mnd_Val)"
+    tab = "FieldEntry,Jobtab"
+    joi = "FieldEntry.Job_ID=Jobtab.Job_ID"
+    cur.execute(f'''select {con} , {val} from {tab} where {joi} and date >={d1} group by FieldEntry.Job_ID''')
     row_headers = ['Job_Name', 'Mandays']
 
     rv = cur.fetchall()
@@ -136,13 +136,13 @@ def dailyreport():
 
     cur = mysql.connection.cursor()
     
-    con = "fieldentry.date, DIVTAB.DIV_NAME, SECTAB.SEC_NAME,SQUTAB.SQU_NAME"
-    val = "FIELDENTRY.MND_VAL, FIELDENTRY.GL_VAL, FIELDENTRY.AREA_VAL"
-    fom = "ROUND((GL_VAL/MND_VAL),2), ROUND((GL_VAL/AREA_VAL),2),ROUND((MND_VAL/AREA_VAL),2),fieldentry.pluck_int"
-    con2 = "SECTAB.SEC_PRUNE , SECTAB.SEC_JAT"
-    tab = "FIELDENTRY,SQUTAB,JOBTAB,SECTAB,DIVTAB"
-    joi = "FIELDENTRY.SQU_ID = SQUTAB.SQU_ID AND FIELDENTRY.JOB_ID=JOBTAB.JOB_ID AND FIELDENTRY.SEC_ID=SECTAB.SEC_ID AND DIVTAB.DIV_ID=SECTAB.DIV_ID"
-    job = "(FIELDENTRY.JOB_ID = 1 )"
+    con = "FieldEntry.date, DivTab.Div_name, SecTab.Sec_Name,SquTab.Squ_Name"
+    val = "FieldEntry.Mnd_Val, FieldEntry.GL_Val, FieldEntry.Area_Val"
+    fom = "ROUND((GL_Val/Mnd_Val),2), ROUND((GL_Val/Area_Val),2),ROUND((Mnd_Val/Area_Val),2),FieldEntry.pluck_int"
+    con2 = "SecTab.Sec_Prune , SecTab.Sec_Jat"
+    tab = "FieldEntry,SquTab,Jobtab,SecTab,DivTab"
+    joi = "FieldEntry.Squ_ID = SquTab.Squ_ID AND FieldEntry.Job_ID=Jobtab.Job_ID AND FieldEntry.Sec_ID=SecTab.Sec_ID AND DivTab.Div_ID=SecTab.Div_ID"
+    job = "(FieldEntry.Job_ID = 1 )"
     cur.execute(f'''select {con} , {val} , {fom} , {con2} from {tab} where {joi} and date ={d1} and {job}''')
 
     row_headers = ['Date', 'Division','Section_Name', 'Squad_Name', 'Mandays', 'Greenleaf', 'AreaCovered', 'GlMnd', 'GlHa', 'MndHa','PluckInterval''Prune','Jat']
@@ -165,12 +165,12 @@ def dailyreport():
 
     cur = mysql.connection.cursor()
 
-    con = "FIELDENTRY.DATE, JOBTAB.JOB_NAME,DIVTAB.DIV_NAME, SECTAB.SEC_NAME, SQUTAB.SQU_NAME"
-    val = "MND_VAL, AREA_VAL"
-    fom = "ROUND((MND_VAL/AREA_VAL),2)"   
-    tab = "FIELDENTRY,SQUTAB,JOBTAB,SECTAB,DIVTAB"
-    joi = "FIELDENTRY.SQU_ID = SQUTAB.SQU_ID AND FIELDENTRY.JOB_ID=JOBTAB.JOB_ID AND FIELDENTRY.SEC_ID=SECTAB.SEC_ID AND DIVTAB.DIV_ID=SECTAB.DIV_ID"
-    job = "(FIELDENTRY.JOB_ID = 2 or FIELDENTRY.JOB_ID = 3 or FIELDENTRY.JOB_ID = 4)"
+    con = "FieldEntry.DATE, Jobtab.JOB_NAME,DivTab.Div_name, SecTab.Sec_Name, SquTab.Squ_Name"
+    val = "Mnd_Val, Area_Val"
+    fom = "ROUND((Mnd_Val/Area_Val),2)"   
+    tab = "FieldEntry,SquTab,Jobtab,SecTab,DivTab"
+    joi = "FieldEntry.Squ_ID = SquTab.Squ_ID AND FieldEntry.Job_ID=Jobtab.Job_ID AND FieldEntry.Sec_ID=SecTab.Sec_ID AND DivTab.Div_ID=SecTab.Div_ID"
+    job = "(FieldEntry.Job_ID = 2 or FieldEntry.Job_ID = 3 or FieldEntry.Job_ID = 4)"
     cur.execute(f'''select {con} , {val} , {fom} from {tab} where {joi} and date ={d1} and {job}''')
     rv = cur.fetchall()
 
@@ -193,23 +193,23 @@ def dailyreport():
     cur = mysql.connection.cursor()
 
       #SUM-ALLGRADES-DATERANGE
-    cur.execute(f"SELECT SUM(SORTENTRY.SORT_KG) FROM SORTENTRY WHERE date >={d1} and date <={d2} ")
+    cur.execute(f"SELECT SUM(SortEntry.Sort_Kg) FROM SortEntry WHERE date >={d1} and date <={d2} ")
     rv = cur.fetchall()
 
       #SUM-ALLGRADES-DATE
-    cur.execute(f"SELECT SUM(SORTENTRY.SORT_KG) FROM SORTENTRY WHERE date ={d1} ")
+    cur.execute(f"SELECT SUM(SortEntry.Sort_Kg) FROM SortEntry WHERE date ={d1} ")
     rv3 = cur.fetchall()
 
       #SUM-PERGRADE-DATERANGE
-    cur.execute(f"SELECT SUM(SORTENTRY.SORT_KG) FROM SORTENTRY, TEAGRADETAB WHERE SORTENTRY.TEAGRADE_ID = TEAGRADETAB.TEAGRADE_ID and date >={d1} and date <={d2} group by TEAGRADETAB.TEAGRADE_NAME ")
+    cur.execute(f"SELECT SUM(SortEntry.Sort_Kg) FROM SortEntry, TeaGradeTab WHERE SortEntry.TeaGrade_name = TeaGradeTab.TeaGrade_name and date >={d1} and date <={d2} group by TeaGradeTab.TeaGrade_Name ")
     rv1 = cur.fetchall()
 
       #PERGRADE-DATE
-    cur.execute(f"SELECT SUM(SORTENTRY.SORT_KG) FROM SORTENTRY, TEAGRADETAB WHERE SORTENTRY.TEAGRADE_ID = TEAGRADETAB.TEAGRADE_ID and date ={d1} group by TEAGRADETAB.TEAGRADE_NAME ")
+    cur.execute(f"SELECT SUM(SortEntry.Sort_Kg) FROM SortEntry, TeaGradeTab WHERE SortEntry.TeaGrade_name = TeaGradeTab.TeaGrade_name and date ={d1} group by TeaGradeTab.TeaGrade_Name ")
     rv4 = cur.fetchall()      
 
       #GRADE-NAME
-    cur.execute(f"SELECT TEAGRADETAB.TEAGRADE_NAME FROM SORTENTRY, TEAGRADETAB WHERE SORTENTRY.TEAGRADE_ID = TEAGRADETAB.TEAGRADE_ID and date >={d1} and date <={d2} group by TEAGRADETAB.TEAGRADE_NAME ")
+    cur.execute(f"SELECT TeaGradeTab.TeaGrade_NAME FROM SortEntry, TeaGradeTab WHERE SortEntry.TeaGrade_name = TeaGradeTab.TeaGrade_name and date >={d1} and date <={d2} group by TeaGradeTab.TeaGrade_Name ")
     rv2 = cur.fetchall()
 
     x = [s[0] for s in rv]
@@ -239,18 +239,18 @@ def dailyreport():
     #6
     cur = mysql.connection.cursor()
 
-    con = " MACHINETAB.MACH_NAME"
-    fom = " sum(FUELENTRY.FUEL_VAL), sum(TM_VAL), ROUND((SUM(TM_VAL)/sum(FUELENTRY.FUEL_VAL)),2)"
-    tab = "FUELENTRY, MACHINETAB, FUELTAB, TMENTRY"
-    joi = "FUELENTRY.FUEL_ID = FUELTAB.FUEL_ID AND FUELENTRY.MACH_ID = MACHINETAB.MACH_ID AND TMENTRY.TM_DATE = FUELENTRY.DATE"
-    cur.execute(f'''select {con} , {fom}  from {tab} where {joi} and date = {d1} group by MACHINETAB.MACH_NAME''')
+    con = " MachineTab.MACH_NAME"
+    fom = " sum(FuelEntry.Fuel_Val), sum(TM_Val), ROUND((SUM(TM_Val)/sum(FuelEntry.Fuel_Val)),2)"
+    tab = "FuelEntry, MachineTab, FuelTab, TMEntry"
+    joi = "FuelEntry.Fuel_ID = FuelTab.Fuel_ID AND FuelEntry.Mach_ID = MachineTab.Mach_ID AND TMEntry.TM_Date = FuelEntry.Date"
+    cur.execute(f'''select {con} , {fom}  from {tab} where {joi} and Date = {d1} group by MachineTab.MACH_NAME''')
     rv = cur.fetchall()
 
     row_headers = ['Machine', 'FuelUsed' , 'TM', 'TMFuel']
     json_data6 = []
 
     def sids_converter(o):
-        if isinstance(o, datetime.date):
+        if isinstance(o, Datetime.Date):
                 return str(o.year) + str("/") + str(o.month) + str("/") + str(o.day)
 
     for row in rv:
