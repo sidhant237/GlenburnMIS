@@ -1,17 +1,18 @@
 from flask import Flask, render_template, request, jsonify
 from flask_cors import cross_origin
 from App import app, mysql
-import json, Datetime
-from Dateutil.relativedelta import relativedelta
+import json, datetime
+from dateutil.relativedelta import relativedelta
 
 
 #9## DAILYRPEORT ###
 @app.route('/dailyreport',methods=['GET', 'POST'])
 @cross_origin()
-
 def dailyreport():
     cur = mysql.connection.cursor()
-    d1 = request.args.get("start") #"2020-07-01"
+    d1 = request.args.get("start")
+    if not d1:
+      d1 = '2020-07-01'
     d11 = "'" + str((datetime.datetime.strptime(d1, '%Y-%m-%d') - relativedelta(years=1))).split(' ')[0] + "'"
     d1 = "'" + d1 + "'"
     d0 = "'2020-03-01'"  # start date current year
@@ -138,14 +139,14 @@ def dailyreport():
     
     con = "FieldEntry.date, DivTab.Div_name, SecTab.Sec_Name,SquTab.Squ_Name"
     val = "FieldEntry.Mnd_Val, FieldEntry.GL_Val, FieldEntry.Area_Val"
-    fom = "ROUND((GL_Val/Mnd_Val),2), ROUND((GL_Val/Area_Val),2),ROUND((Mnd_Val/Area_Val),2),FieldEntry.pluck_int"
+    fom = "ROUND((GL_Val/Mnd_Val),2), ROUND((GL_Val/Area_Val),2),ROUND((Mnd_Val/Area_Val),2)"
     con2 = "SecTab.Sec_Prune , SecTab.Sec_Jat"
     tab = "FieldEntry,SquTab,Jobtab,SecTab,DivTab"
     joi = "FieldEntry.Squ_ID = SquTab.Squ_ID AND FieldEntry.Job_ID=Jobtab.Job_ID AND FieldEntry.Sec_ID=SecTab.Sec_ID AND DivTab.Div_ID=SecTab.Div_ID"
     job = "(FieldEntry.Job_ID = 1 )"
     cur.execute(f'''select {con} , {val} , {fom} , {con2} from {tab} where {joi} and date ={d1} and {job}''')
 
-    row_headers = ['Date', 'Division','Section_Name', 'Squad_Name', 'Mandays', 'Greenleaf', 'AreaCovered', 'GlMnd', 'GlHa', 'MndHa','PluckInterval''Prune','Jat']
+    row_headers = ['Date', 'Division','Section_Name', 'Squad_Name', 'Mandays', 'Greenleaf', 'AreaCovered', 'GlMnd', 'GlHa', 'MndHa', 'Prune','Jat']
     rv = cur.fetchall()
     json_data3 = []
 
@@ -201,15 +202,15 @@ def dailyreport():
     rv3 = cur.fetchall()
 
       #SUM-PERGRADE-DATERANGE
-    cur.execute(f"SELECT SUM(SortEntry.Sort_Kg) FROM SortEntry, TeaGradeTab WHERE SortEntry.TeaGrade_name = TeaGradeTab.TeaGrade_name and date >={d1} and date <={d2} group by TeaGradeTab.TeaGrade_Name ")
+    cur.execute(f"SELECT SUM(SortEntry.Sort_Kg) FROM SortEntry, TeaGradeTab WHERE SortEntry.TeaGrade_ID = TeaGradeTab.TeaGrade_ID and date >={d1} and date <={d2} group by TeaGradeTab.TeaGrade_Name ")
     rv1 = cur.fetchall()
 
       #PERGRADE-DATE
-    cur.execute(f"SELECT SUM(SortEntry.Sort_Kg) FROM SortEntry, TeaGradeTab WHERE SortEntry.TeaGrade_name = TeaGradeTab.TeaGrade_name and date ={d1} group by TeaGradeTab.TeaGrade_Name ")
+    cur.execute(f"SELECT SUM(SortEntry.Sort_Kg) FROM SortEntry, TeaGradeTab WHERE SortEntry.TeaGrade_ID = TeaGradeTab.TeaGrade_ID and date ={d1} group by TeaGradeTab.TeaGrade_Name ")
     rv4 = cur.fetchall()      
 
       #GRADE-NAME
-    cur.execute(f"SELECT TeaGradeTab.TeaGrade_NAME FROM SortEntry, TeaGradeTab WHERE SortEntry.TeaGrade_name = TeaGradeTab.TeaGrade_name and date >={d1} and date <={d2} group by TeaGradeTab.TeaGrade_Name ")
+    cur.execute(f"SELECT TeaGradeTab.TeaGrade_Name FROM SortEntry, TeaGradeTab WHERE SortEntry.TeaGrade_ID = TeaGradeTab.TeaGrade_ID and date >={d1} and date <={d2} group by TeaGradeTab.TeaGrade_Name ")
     rv2 = cur.fetchall()
 
     x = [s[0] for s in rv]
@@ -250,7 +251,7 @@ def dailyreport():
     json_data6 = []
 
     def sids_converter(o):
-        if isinstance(o, Datetime.Date):
+        if isinstance(o, datetime.date):
                 return str(o.year) + str("/") + str(o.month) + str("/") + str(o.day)
 
     for row in rv:
