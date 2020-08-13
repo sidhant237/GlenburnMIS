@@ -21,3 +21,6 @@ mail = Mail(app)
 
 #importing views
 from App import DailyReport, Email, Factory, Field, Upload
+
+def get_app():
+	return app

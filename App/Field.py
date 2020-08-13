@@ -7,6 +7,10 @@ import json, datetime
 
 
 
+@app.route('/', methods=['GET'])
+@cross_origin()
+def home():
+	return "Application running successfully"
 
 
 @app.route('/cultdaily',methods=['GET', 'POST'])
