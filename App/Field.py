@@ -46,22 +46,37 @@ def cultivationdaily():
 @cross_origin()
 def cultivationgroup():
     cur = mysql.connection.cursor()
-    d1 = "'" + (str(request.args.get("start"))) + "'"
-    d2 = "'" + (str(request.args.get("end"))) + "'"
-    grp = "'" + (str(request.args.get("grpby"))) + "'"
+    # d1 = "'" + (str(request.args.get("start"))) + "'"
+    # d2 = "'" + (str(request.args.get("end"))) + "'"
+    # grp = "'" + (str(request.args.get("grpby"))) + "'"
+    d1 = "'2020-07-01'"
+    d2 = "'2020-07-14'"
+    grp = "'job'"
 
     print(type(d1), type(grp))
 
-    con = "Jobtab.Job_Name"
-    val = "sum(FieldEntry.Mnd_Val)"
-    val1 = "sum(FieldEntry.Area_Val)"
-    fom = "ROUND((sum(FieldEntry.Mnd_Val))/(sum(FieldEntry.Area_Val)),2)"
-    tab = "FieldEntry,SquTab,Jobtab,SecTab,DivTab"
-    joi = "FieldEntry.Squ_ID = SquTab.Squ_ID AND FieldEntry.Job_ID=Jobtab.Job_ID AND FieldEntry.Sec_ID=SecTab.Sec_ID AND DivTab.Div_ID=SecTab.Div_ID"
-    job = "(FieldEntry.Job_ID = 2 or FieldEntry.Job_ID = 3 or FieldEntry.Job_ID = 4)"
-    cur.execute(f'''select {con} , {val} , {val1} , {fom}  from {tab} where {joi} and date >={d1} and date <={d2} and {job} group by FieldEntry.Job_ID''')
-    rv = cur.fetchall()
-    row_headers = ['Job_Name', 'Mandays', 'AreaCovered', 'MndArea']
+    if grp == "'job'":
+        con = "Jobtab.Job_Name"
+        val = "sum(FieldEntry.Mnd_Val)"
+        val1 = "sum(FieldEntry.Area_Val)"
+        fom = "ROUND((sum(FieldEntry.Mnd_Val))/(sum(FieldEntry.Area_Val)),2)"
+        tab = "FieldEntry,SquTab,Jobtab,SecTab,DivTab"
+        joi = "FieldEntry.Squ_ID = SquTab.Squ_ID AND FieldEntry.Job_ID=Jobtab.Job_ID AND FieldEntry.Sec_ID=SecTab.Sec_ID AND DivTab.Div_ID=SecTab.Div_ID"
+        job = "(FieldEntry.Job_ID = 2 or FieldEntry.Job_ID = 3 or FieldEntry.Job_ID = 4)"
+        cur.execute(f'''select {con} , {val} , {val1} , {fom}  from {tab} where {joi} and date >={d1} and date <={d2} and {job} group by FieldEntry.Job_ID''')
+        rv = cur.fetchall()
+        row_headers = ['Job_Name', 'Mandays', 'AreaCovered', 'MndArea']
+
+    elif grp == "'section'":
+        con = "SecTab.Sec_Name"
+        val = "sum(FieldEntry.Mnd_Val)"
+        val1 = "sum(FieldEntry.Area_Val)"
+        fom = "ROUND((SUM(FieldEntry.Mnd_Val))/(SUM(FieldEntry.Area_Val)),2)"
+        tab = "FieldEntry,SquTab,Jobtab,SecTab,DivTab"
+        joi = "FieldEntry.Squ_ID = SquTab.Squ_ID AND FieldEntry.Job_ID=Jobtab.Job_ID AND FieldEntry.Sec_ID=SecTab.Sec_ID AND DivTab.Div_ID=SecTab.Div_ID"
+        cur.execute(f'''select {con} , {val} , {val1} , {fom}  from {tab} where {joi} and date >={d1} and date <={d2} group by FieldEntry.Sec_ID''')
+        rv = cur.fetchall()
+        row_headers = ['Section_Name', 'Mandays', 'AreaCovered', 'MndArea']
 
     json_data = []
 

@@ -8,10 +8,10 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 CORS_HEADERS = 'Content-Type'
 
 #SQL DB configuratiosn
-MYSQL_HOST = "localhost"
+MYSQL_HOST = "aa3uwdk1bwspg2.cmagocj6ky2v.ap-south-1.rds.amazonaws.com"
 MYSQL_USER = "root"
-MYSQL_PASSWORD = 'password'
-MYSQL_DB = "GlenDB"
+MYSQL_PASSWORD = 'glenburnmis'
+MYSQL_DB = "ebdb"
 
 
 #mail sending configuration
